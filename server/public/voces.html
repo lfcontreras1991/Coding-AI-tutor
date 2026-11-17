@@ -35,6 +35,12 @@ tarda unos segundos; después suena al instante.</p>
 </p>
 <p id="status"></p>
 
+<div class="phrase">
+    <p><b>Voz del iPad con retraso.</b> Las pistas del tutor llegan unos segundos después de
+    tocar el botón. Toca aquí y espera sin tocar nada más: la voz debe sonar sola a los 3 segundos.</p>
+    <button class="device" id="delayed">Hablar en 3 segundos</button>
+</div>
+
 <div id="phrases"></div>
 
 <div class="phrase">
@@ -131,6 +137,13 @@ const addButtons = (container, voices, getText) => {
         container.appendChild(button);
     }
 };
+
+// Speaks from a timer instead of from the tap itself, like a hint that arrives from the server.
+document.getElementById('delayed').addEventListener('click', () => {
+    statusElement.style.color = '#555';
+    statusElement.textContent = 'Esperando 3 segundos...';
+    setTimeout(() => playDeviceVoice('Aquí va tu pista. Busca el bloque naranja del bucle.'), 3000);
+});
 
 (async () => {
     let voices = [];

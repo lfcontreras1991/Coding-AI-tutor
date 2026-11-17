@@ -32,6 +32,20 @@ slow speed. Listen with the learner and note which voice is clearest and most pl
 | es_AR-daniela-high | | | |
 | Tablet voice | | | |
 
+Result so far: the tablet's own voice is the best. Its pace is easy to follow and it is
+clear even on harder words such as "bucle". Decision: use the tablet voice
+(`speechSynthesis`) for the tutor; Piper stays as a fallback.
+
+Still to check, with the "Hablar en 3 segundos" button: the tablet voice must also speak
+from a timer, with no new tap, because hints arrive a few seconds after the button press.
+
+| Check | Result |
+|---|---|
+| Tablet voice speaks 3 s after one tap | |
+| Same on the very first tap after loading the page | |
+| Same with silent mode on | |
+| Voice name shown under the speed selector | |
+
 Measured on the PC: a new phrase takes 2 to 5 s to synthesize because the voice model is
 loaded on every request; a cached phrase is served in about 0.2 s. Fixed lesson prompts are
 therefore instant after their first use. Live hints will need Piper kept loaded in memory.
