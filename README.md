@@ -11,6 +11,10 @@ Changes made in this fork:
   on the home network (`npm run build:tutor`, then `npm run serve`). It also turns text into
   Spanish speech with a local [Piper](https://github.com/OHF-voice/piper1-gpl) install, run as a
   separate process (setup steps in `server/tts.mjs`).
+- `packages/scratch-gui/src/tutor/`: the tutor. With `?lesson=<id>` in the address, a bar above
+  the editor reads each step aloud with the device's Spanish voice, checks the learner's
+  scripts to decide when a step is done, and gives hints that end by making the needed block
+  glow in the palette. The editor itself stays complete.
 - `lessons/`: lesson project files.
 - `docs/ipad-test.md`: tablet test log.
 - Project files accept `ui.blocksScale` and `ui.stageSize`.

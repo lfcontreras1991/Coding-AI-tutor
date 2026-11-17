@@ -47,6 +47,7 @@ import {setTheme} from '../../reducers/settings.js';
 import {PLATFORM} from '../../lib/platform.js';
 import {MenuRefProvider} from '../../contexts/menu-ref-context.jsx';
 import {ModalFocusProvider} from '../../contexts/modal-focus-context.jsx';
+import {ActiveTutorBar, editorClassName as tutorEditorClassName} from '../../tutor/tutor-bar.jsx';
 
 const ariaMessages = defineMessages({
     menuBar: {
@@ -274,8 +275,9 @@ const GUIComponent = props => {
             </StageWrapper>
         ) : (
             <ModalFocusProvider>
+                <ActiveTutorBar vm={vm} />
                 <Box
-                    className={styles.pageWrapper}
+                    className={classNames(styles.pageWrapper, tutorEditorClassName)}
                     dir={isRtl ? 'rtl' : 'ltr'}
                     {...componentProps}
                 >

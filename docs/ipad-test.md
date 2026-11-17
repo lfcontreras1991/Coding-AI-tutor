@@ -19,7 +19,24 @@ not reported one by one.
 
 Start the server on the PC with `npm run serve` and open the "On Wi-Fi" address it prints.
 
-## Day 2: voice comparison (to do)
+## Day 3: first guided steps (to do)
+
+Open `/editor.html?locale=es-419&lesson=atrapa-la-manzana`. The tutor bar sits above the
+full editor; nothing in the editor is hidden. The tablet voice was confirmed to speak from
+a timer with no new tap, so spoken hints need no workaround.
+
+| Check | Result |
+|---|---|
+| "Empezar" speaks the greeting and the first step | |
+| The bar fits: text readable, buttons easy to tap, editor still usable below | |
+| Dropping the flag block moves to step 2 by itself, with praise | |
+| "Listo" too early says "Todavía no" | |
+| Third "Dame una pista" scrolls the palette and makes the right block glow | |
+| "¿Por qué?" explains the step | |
+| The speaker button repeats the last sentence | |
+| After step 3 the sprite follows the finger when the flag is pressed | |
+
+## Day 2: voice comparison (done)
 
 Open `/pruebas/voces.html` on the tablet. Each phrase can be played with every installed
 Piper voice (synthesized on the PC) and with the tablet's own Spanish voice, at normal or
