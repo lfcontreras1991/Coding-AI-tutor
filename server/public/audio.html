@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es-419">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba de sonido</title>
+<style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 24px; font-size: 20px; line-height: 1.4; }
+    button { font-size: 28px; min-height: 72px; padding: 12px 32px; border-radius: 16px; border: 0;
+        background: #0a7d33; color: #fff; margin: 8px 8px 8px 0; }
+    button.secondary { background: #444; }
+    label { display: block; margin: 16px 0; }
+    input[type=checkbox] { width: 28px; height: 28px; vertical-align: middle; }
+    #log { white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 16px;
+        background: #f2f2f2; padding: 12px; border-radius: 8px; min-height: 120px; }
+</style>
+</head>
+<body>
+<h1>Prueba de sonido</h1>
+<p>Toca <b>Empezar</b> una sola vez. Dos segundos después se descarga un sonido y debe sonar
+sin tocar nada más. Repite con el modo silencio del iPad activado y desactivado.</p>
+
+<label><input type="checkbox" id="playback"> Usar sesión de audio "playback" (debería sonar aunque el iPad esté en silencio)</label>
+
+<button id="start">Empezar</button>
+<button id="again" class="secondary" disabled>Otra vez (sin toque nuevo: espera 2 s)</button>
+
+<h2>Registro</h2>
+<div id="log"></div>
+
+<script>
+const logElement = document.getElementById('log');
+const log = text => {
+    logElement.textContent += `${new Date().toLocaleTimeString()}  ${text}\n`;
+};
+let context = null;
+
+const playLater = () => {
+    log('Esperando 2 s...');
+    setTimeout(async () => {
+        try {
+            const response = await fetch(`/api/test-tone.wav?t=${Date.now()}`);
+            const buffer = await context.decodeAudioData(await response.arrayBuffer());
+            const source = context.createBufferSource();
+            source.buffer = buffer;
+            source.connect(context.destination);
+            source.onended = () => log('Fin del sonido. ¿Se escuchó?');
+            source.start();
+            log(`Reproduciendo (estado del contexto: ${context.state})`);
+        } catch (error) {
+            log(`ERROR: ${error.message}`);
+        }
+    }, 2000);
+};
+
+document.getElementById('start').addEventListener('click', async () => {
+    try {
+        if (document.getElementById('playback').checked) {
+            if (navigator.audioSession) {
+                navigator.audioSession.type = 'playback';
+                log('audioSession.type = playback');
+            } else {
+                log('navigator.audioSession no existe en este navegador');
+            }
+        }
+        if (!context) {
+            context = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        await context.resume();
+        log(`Contexto desbloqueado (estado: ${context.state})`);
+        document.getElementById('again').disabled = false;
+        playLater();
+    } catch (error) {
+        log(`ERROR: ${error.message}`);
+    }
+});
+
+// Runs from a timer, not directly from the tap, to mimic a hint that arrives later.
+document.getElementById('again').addEventListener('click', () => setTimeout(playLater, 0));
+
+log(navigator.userAgent);
+</script>
+</body>
+</html>

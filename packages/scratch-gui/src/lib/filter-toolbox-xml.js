@@ -56,9 +56,11 @@ const filterToolboxXML = function (toolboxXML, toolboxConfig) {
             );
 
             filtered = filtered.replace(categoryRegex, (match, openTag, content, closeTag) => {
-                // Remove block elements whose type is not in the allowedSet
+                // Remove block elements whose type is not in the allowedSet.
+                // Self-closing blocks are matched first; otherwise their tag would
+                // be read as an opening tag and swallow everything up to the next </block>.
                 const filteredContent = content.replace(
-                    /<block\b[^>]*\btype="([^"]*)"[^>]*>[\s\S]*?<\/block>|<block\b[^>]*\btype="([^"]*)"[^>]*\/>/g,
+                    /<block\b[^>]*\btype="([^"]*)"[^>]*\/>|<block\b[^>]*\btype="([^"]*)"[^>]*>[\s\S]*?<\/block>/g,
                     (blockMatch, type1, type2) => {
                         const blockType = type1 || type2;
                         return allowedSet.has(blockType) ? blockMatch : '';

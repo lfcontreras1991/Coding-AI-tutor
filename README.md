@@ -1,3 +1,21 @@
+# Block tutor for toddlers (a Blockflow fork)
+
+This repository is a modified copy of [Blockflow](https://github.com/openpatch/blockflow).
+It is a personal, non-commercial project that adds a guided tutor for toddlers learning
+block programming in Spanish on a tablet. It is not affiliated with or endorsed by the
+Scratch Foundation or by Blockflow.
+
+Changes made in this fork:
+
+- `server/`: a small Node server that serves the editor build, lessons and device test pages
+  on the home network (`npm run build:tutor`, then `npm run serve`).
+- `lessons/`: lesson project files.
+- `docs/ipad-test.md`: tablet test log.
+- Project files accept `ui.blocksScale` and `ui.stageSize`.
+- The toolbox block filter no longer keeps the blocks that follow an allowed self-closing block.
+
+The original Blockflow README follows.
+
 # Blockflow
 
 Blockflow is a fork of the [Scratch editor](https://github.com/scratchfoundation/scratch-editor) by the Scratch Foundation. It extends Scratch with configurable project files that let you customize the editor UI, restrict available blocks, and embed step-by-step tutorials — all controlled via a single URL parameter.

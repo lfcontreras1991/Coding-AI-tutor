@@ -9,6 +9,8 @@ import {setProjectFile, setProjectFileLoading, setProjectFileError} from '../red
 import {setDynamicAssets} from '../reducers/dynamic-assets';
 import {setExternalDeck} from '../reducers/cards';
 import {setFullScreen} from '../reducers/mode';
+import {setStageSize} from '../reducers/stage-size';
+import {STAGE_SIZE_MODES} from './layout-constants';
 import {
     LoadingState,
     requestProjectUpload,
@@ -406,7 +408,12 @@ const ProjectFileHOC = function (WrappedComponent) {
     });
 
     const mapDispatchToProps = dispatch => ({
-        onSetProjectFile: pf => dispatch(setProjectFile(pf)),
+        onSetProjectFile: pf => {
+            dispatch(setProjectFile(pf));
+            if (pf.ui && pf.ui.stageSize === STAGE_SIZE_MODES.small) {
+                dispatch(setStageSize(STAGE_SIZE_MODES.small));
+            }
+        },
         onSetProjectFileLoading: () => dispatch(setProjectFileLoading()),
         onSetProjectFileError: error => dispatch(setProjectFileError(error)),
         onSetDynamicAssets: assets => dispatch(setDynamicAssets(assets)),

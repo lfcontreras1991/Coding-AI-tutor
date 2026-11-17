@@ -177,6 +177,10 @@ class Blocks extends React.Component {
         addFunctionListener(this.workspace, 'zoom', this.onWorkspaceMetricsChange);
         this.workspace.getToolbox().selectItemByPosition(0);
 
+        if (this.props.blocksScale) {
+            this.workspace.setScale(this.props.blocksScale);
+        }
+
         this.attachVM();
         // Only update blocks/vm locale when visible to avoid sizing issues
         // If locale changes while not visible it will get handled in didUpdate
@@ -200,10 +204,17 @@ class Blocks extends React.Component {
             this.props.locale !== nextProps.locale ||
             this.props.anyModalVisible !== nextProps.anyModalVisible ||
             this.props.stageSize !== nextProps.stageSize ||
-            this.props.toolboxConfig !== nextProps.toolboxConfig
+            this.props.toolboxConfig !== nextProps.toolboxConfig ||
+            this.props.blocksScale !== nextProps.blocksScale
         );
     }
     componentDidUpdate (prevProps) {
+        // The project file arrives after the workspace is injected, so its
+        // block scale is applied here as well as on mount.
+        if (this.props.blocksScale && this.props.blocksScale !== prevProps.blocksScale) {
+            this.workspace.setScale(this.props.blocksScale);
+        }
+
         // If any modals are open, call hideChaff to close z-indexed field editors
         if (this.props.anyModalVisible && !prevProps.anyModalVisible) {
             this.ScratchBlocks.hideChaff();
@@ -703,6 +714,7 @@ class Blocks extends React.Component {
             onRequestCloseCustomProcedures,
             toolboxXML,
             toolboxConfig,
+            blocksScale,
             updateMetrics: updateMetricsProp,
             useCatBlocks,
             workspaceMetrics,
@@ -754,6 +766,7 @@ class Blocks extends React.Component {
 
 Blocks.propTypes = {
     anyModalVisible: PropTypes.bool,
+    blocksScale: PropTypes.number,
     canUseCloud: PropTypes.bool,
     customProceduresVisible: PropTypes.bool,
     extensionLibraryVisible: PropTypes.bool,
@@ -830,6 +843,7 @@ const mapStateToProps = state => ({
     toolboxXML: state.scratchGui.toolbox.toolboxXML,
     toolboxConfig: state.scratchGui.projectFile.projectFile ?
         state.scratchGui.projectFile.projectFile.toolbox : null,
+    blocksScale: state.scratchGui.projectFile.projectFile?.ui?.blocksScale,
     customProceduresVisible: state.scratchGui.customProcedures.active,
     workspaceMetrics: state.scratchGui.workspaceMetrics,
     useCatBlocks: isTimeTravel2020(state) || state.scratchGui.settings.theme === CAT_BLOCKS_THEME
