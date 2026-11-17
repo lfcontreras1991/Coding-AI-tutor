@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es-419">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba de voces</title>
+<style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 24px; font-size: 19px; line-height: 1.4; }
+    h1 { margin-top: 0; }
+    .phrase { border-top: 1px solid #ccc; padding: 14px 0; }
+    .phrase p { margin: 0 0 10px; font-size: 22px; }
+    button { font-size: 19px; min-height: 56px; padding: 8px 20px; border-radius: 14px; border: 0;
+        background: #0a7d33; color: #fff; margin: 4px 8px 4px 0; }
+    button.device { background: #444; }
+    button.busy { opacity: 0.5; }
+    label { margin-right: 20px; }
+    select, input[type=text] { font-size: 19px; padding: 6px; }
+    input[type=text] { width: 70%; }
+    #status { color: #a00; min-height: 1.5em; }
+</style>
+</head>
+<body>
+<h1>Prueba de voces</h1>
+<p>Toca un botón para escuchar la misma frase con cada voz. Los botones verdes son las voces
+de la computadora (Piper). El botón gris es la voz del propio iPad. La primera vez, cada frase
+tarda unos segundos; después suena al instante.</p>
+
+<p>
+    <label>Velocidad:
+        <select id="speed">
+            <option value="normal">normal</option>
+            <option value="lenta">lenta</option>
+        </select>
+    </label>
+</p>
+<p id="status"></p>
+
+<div id="phrases"></div>
+
+<div class="phrase">
+    <p><input type="text" id="custom" placeholder="Escribe otra frase para probar"></p>
+    <div id="custom-buttons"></div>
+</div>
+
+<script>
+const PHRASES = [
+    '¡Hola! Vamos a hacer un juego.',
+    'Busca el bloque amarillo con la bandera verde. Arrástralo al centro.',
+    'Ahora pega el bloque "por siempre" debajo de la bandera.',
+    '¿Qué bloque repite las cosas muchas veces?',
+    'Mira el bloque que brilla. Mételo dentro de "por siempre".',
+    'Todavía no. ¿Quieres una pista?',
+    '¡Muy bien! La cesta sigue tu dedo. Ahora vamos con la manzana.'
+];
+
+const statusElement = document.getElementById('status');
+let context = null;
+let playing = null;
+
+const stopAll = () => {
+    if (playing) {
+        playing.stop();
+        playing = null;
+    }
+    if (window.speechSynthesis) speechSynthesis.cancel();
+};
+
+const playServerVoice = async (voice, text, button) => {
+    stopAll();
+    // Created and resumed inside the tap so the sound that arrives later is allowed to play.
+    if (!context) context = new (window.AudioContext || window.webkitAudioContext)();
+    await context.resume();
+    button.classList.add('busy');
+    statusElement.textContent = '';
+    try {
+        const started = performance.now();
+        const response = await fetch('/api/tts', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text, voice, speed: document.getElementById('speed').value})
+        });
+        if (!response.ok) throw new Error((await response.json()).error);
+        const buffer = await context.decodeAudioData(await response.arrayBuffer());
+        statusElement.style.color = '#555';
+        statusElement.textContent = `${voice}: ${Math.round(performance.now() - started)} ms de espera`;
+        const source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(context.destination);
+        source.start();
+        playing = source;
+    } catch (error) {
+        statusElement.style.color = '#a00';
+        statusElement.textContent = `Error: ${error.message}`;
+    } finally {
+        button.classList.remove('busy');
+    }
+};
+
+const playDeviceVoice = text => {
+    stopAll();
+    const voices = speechSynthesis.getVoices().filter(voice => voice.lang.toLowerCase().startsWith('es'));
+    const voice = voices.find(candidate => /es[-_](mx|419|us)/i.test(candidate.lang)) || voices[0];
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = voice ? voice.lang : 'es-MX';
+    if (voice) utterance.voice = voice;
+    utterance.rate = document.getElementById('speed').value === 'lenta' ? 0.8 : 1;
+    statusElement.style.color = '#555';
+    statusElement.textContent = voice ? `Voz del dispositivo: ${voice.name} (${voice.lang})` :
+        'El dispositivo no tiene una voz en español';
+    speechSynthesis.speak(utterance);
+};
+
+const addButtons = (container, voices, getText) => {
+    for (const voice of voices) {
+        const button = document.createElement('button');
+        button.textContent = voice;
+        button.addEventListener('click', () => {
+            const text = getText();
+            if (text) playServerVoice(voice, text, button);
+        });
+        container.appendChild(button);
+    }
+    if (window.speechSynthesis) {
+        const button = document.createElement('button');
+        button.className = 'device';
+        button.textContent = 'Voz del iPad';
+        button.addEventListener('click', () => {
+            const text = getText();
+            if (text) playDeviceVoice(text);
+        });
+        container.appendChild(button);
+    }
+};
+
+(async () => {
+    let voices = [];
+    try {
+        voices = (await (await fetch('/api/voices')).json()).voices;
+    } catch (error) {
+        statusElement.textContent = `Error: ${error.message}`;
+    }
+    if (voices.length === 0) statusElement.textContent = 'No hay voces de Piper instaladas en la computadora.';
+    // Some browsers fill the device voice list only after this first call.
+    if (window.speechSynthesis) speechSynthesis.getVoices();
+
+    const list = document.getElementById('phrases');
+    for (const phrase of PHRASES) {
+        const row = document.createElement('div');
+        row.className = 'phrase';
+        const text = document.createElement('p');
+        text.textContent = phrase;
+        row.appendChild(text);
+        addButtons(row, voices, () => phrase);
+        list.appendChild(row);
+    }
+    const custom = document.getElementById('custom');
+    addButtons(document.getElementById('custom-buttons'), voices, () => custom.value.trim());
+})();
+</script>
+</body>
+</html>

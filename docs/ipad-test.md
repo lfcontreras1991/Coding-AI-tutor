@@ -19,6 +19,25 @@ not reported one by one.
 
 Start the server on the PC with `npm run serve` and open the "On Wi-Fi" address it prints.
 
+## Day 2: voice comparison (to do)
+
+Open `/pruebas/voces.html` on the tablet. Each phrase can be played with every installed
+Piper voice (synthesized on the PC) and with the tablet's own Spanish voice, at normal or
+slow speed. Listen with the learner and note which voice is clearest and most pleasant.
+
+| Voice | Clear? | Pleasant? | Notes |
+|---|---|---|---|
+| es_MX-claude-high | | | |
+| es_MX-ald-medium | | | |
+| es_AR-daniela-high | | | |
+| Tablet voice | | | |
+
+Measured on the PC: a new phrase takes 2 to 5 s to synthesize because the voice model is
+loaded on every request; a cached phrase is served in about 0.2 s. Fixed lesson prompts are
+therefore instant after their first use. Live hints will need Piper kept loaded in memory.
+
+## Day 1 checklists
+
 ### Editor
 
 Opens the full editor: every block category, the sprite, costume and sound libraries,

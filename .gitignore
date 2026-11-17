@@ -1,3 +1,7 @@
+# Tutor: local speech engine, voice models and generated audio
+/.venv-piper/
+/voices/
+
 # add-repo.sh
 /add-repo.tmp
 /add-repo.errors.log

@@ -3,12 +3,16 @@
 //   /lessons/*   lesson project files and starter projects
 //   /pruebas/*   device test pages
 //   /api/test-tone.wav   short chime generated in memory, for the audio test
+//   /api/voices          GET: installed Piper voices
+//   /api/tts             POST {text, voice, speed?}: spoken phrase as WAV (see tts.mjs)
 import {createReadStream} from 'node:fs';
 import {stat} from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+
+import {TtsError, listVoices, synthesize} from './tts.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT) || 8601;
@@ -77,12 +81,57 @@ const resolveFile = pathname => {
     return null;
 };
 
+const sendJson = (response, status, body) => {
+    response.writeHead(status, {'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store'})
+        .end(JSON.stringify(body));
+};
+
+const readJsonBody = async request => {
+    const chunks = [];
+    let size = 0;
+    for await (const chunk of request) {
+        size += chunk.length;
+        if (size > 10000) throw new TtsError(413, 'Request body too large');
+        chunks.push(chunk);
+    }
+    try {
+        return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    } catch {
+        throw new TtsError(400, 'Request body must be JSON');
+    }
+};
+
+// POST {text, voice, speed?} -> audio/wav
+const handleTts = async (request, response) => {
+    try {
+        const wavPath = await synthesize(await readJsonBody(request));
+        const info = await stat(wavPath);
+        response.writeHead(200, {
+            'Content-Type': 'audio/wav',
+            'Content-Length': info.size,
+            'Cache-Control': 'no-store'
+        });
+        createReadStream(wavPath).pipe(response);
+    } catch (error) {
+        if (!(error instanceof TtsError)) console.error('TTS failed:', error);
+        sendJson(response, error instanceof TtsError ? error.status : 500, {error: error.message});
+    }
+};
+
 const server = http.createServer(async (request, response) => {
     let pathname;
     try {
         pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
     } catch {
         response.writeHead(400).end('Bad request');
+        return;
+    }
+    if (pathname === '/api/tts' && request.method === 'POST') {
+        await handleTts(request, response);
+        return;
+    }
+    if (pathname === '/api/voices' && request.method === 'GET') {
+        sendJson(response, 200, {voices: await listVoices()});
         return;
     }
     if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -132,4 +181,5 @@ server.listen(PORT, '0.0.0.0', () => {
         }
     }
     console.log(`  Audio test: /pruebas/audio.html`);
+    console.log(`  Voice test: /pruebas/voces.html`);
 });

@@ -8,7 +8,9 @@ Scratch Foundation or by Blockflow.
 Changes made in this fork:
 
 - `server/`: a small Node server that serves the editor build, lessons and device test pages
-  on the home network (`npm run build:tutor`, then `npm run serve`).
+  on the home network (`npm run build:tutor`, then `npm run serve`). It also turns text into
+  Spanish speech with a local [Piper](https://github.com/OHF-voice/piper1-gpl) install, run as a
+  separate process (setup steps in `server/tts.mjs`).
 - `lessons/`: lesson project files.
 - `docs/ipad-test.md`: tablet test log.
 - Project files accept `ui.blocksScale` and `ui.stageSize`.
