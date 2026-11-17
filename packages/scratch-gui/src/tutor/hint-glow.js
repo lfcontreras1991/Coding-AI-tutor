@@ -4,22 +4,26 @@ import * as ScratchBlocks from 'scratch-blocks';
 import log from '../lib/log.js';
 
 const GLOW_CLASS = 'tutor-glow';
-const GLOW_MS = 8000;
+const GLOW_MS = 12000;
 const TOP_MARGIN_PX = 40;
 
 // The palette's own "script is running" glow is cleared by the VM, so hints use a separate class.
-// White outline with a pink halo: visible on every block colour.
+// Thick outline flashing white and yellow inside a wide pink halo: visible on every block colour.
 const GLOW_CSS = `
 .${GLOW_CLASS} {
-    animation: tutor-glow-pulse 0.7s ease-in-out infinite alternate;
+    animation: tutor-glow-halo 0.6s ease-in-out infinite alternate;
 }
 .${GLOW_CLASS} > .blocklyPath {
-    stroke: #ffffff !important;
-    stroke-width: 5px !important;
+    stroke-width: 9px !important;
+    animation: tutor-glow-outline 0.6s ease-in-out infinite alternate;
 }
-@keyframes tutor-glow-pulse {
-    from { filter: drop-shadow(0 0 2px #ff1493); }
-    to { filter: drop-shadow(0 0 6px #ff1493) drop-shadow(0 0 14px #ff1493); }
+@keyframes tutor-glow-halo {
+    from { filter: drop-shadow(0 0 4px #ff1493) drop-shadow(0 0 8px #ff1493); }
+    to { filter: drop-shadow(0 0 10px #ff1493) drop-shadow(0 0 22px #ff1493) drop-shadow(0 0 36px #ff1493); }
+}
+@keyframes tutor-glow-outline {
+    from { stroke: #ffffff; }
+    to { stroke: #ffe600; }
 }`;
 
 let glowingRoot = null;
