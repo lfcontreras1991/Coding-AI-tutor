@@ -3,6 +3,7 @@ import debounce from 'lodash.debounce';
 import PropTypes from 'prop-types';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
+import {fetchHint} from './hint-client';
 import {clearGlow, glowPaletteBlock} from './hint-glow';
 import {getActiveLesson} from './lessons';
 import {takeSnapshot} from './project-snapshot';
@@ -17,6 +18,7 @@ const TEXT = {
     why: '¿Por qué?',
     repeat: 'Escuchar otra vez',
     notYet: 'Todavía no. ¿Quieres una pista?',
+    thinking: 'Hermione está pensando...',
     praise: ['¡Muy bien!', '¡Eso es!', '¡Genial!']
 };
 
@@ -38,7 +40,12 @@ const TutorBar = ({lesson, vm}) => {
     const stepRef = useRef(0);
     const hintLevelRef = useRef(0);
 
+    // Counts everything the tutor says, so an answer that arrives late can tell it is stale.
+    const requestRef = useRef(0);
+    const previousHintsRef = useRef([]);
+
     const say = useCallback((text, kind) => {
+        requestRef.current++;
         setMessage({text, kind});
         speak(text);
     }, []);
@@ -48,6 +55,7 @@ const TutorBar = ({lesson, vm}) => {
         const next = firstOpenStep(lesson, vm, from);
         stepRef.current = next;
         hintLevelRef.current = 0;
+        previousHintsRef.current = [];
         setStepIndex(next);
         clearGlow();
         const nextText = next < lesson.steps.length ? lesson.steps[next].prompt : lesson.finished;
@@ -91,17 +99,38 @@ const TutorBar = ({lesson, vm}) => {
         }
     }, [step, stepIndex, vm, goToOpenStep, say]);
 
-    const handleHint = useCallback(() => {
-        const level = Math.min(hintLevelRef.current, step.cannedHints.length - 1);
-        hintLevelRef.current = level + 1;
-        say(step.cannedHints[level], 'hint');
+    // Gets the wording from the server, which falls back to the lesson's fixed text.
+    // Returns false when the learner moved on or asked for something else while waiting.
+    const askTutor = useCallback(async (button, level, fallback) => {
+        const snapshot = takeSnapshot(vm);
+        const requestId = ++requestRef.current;
+        setMessage({text: TEXT.thinking, kind: 'hint'});
+        const text = await fetchHint({
+            lessonId: lesson.id,
+            stepId: step.id,
+            button,
+            hintLevel: level,
+            snapshot: {sprites: snapshot.sprites.filter(sprite => !sprite.isStage)},
+            missing: step.check(snapshot).missing,
+            previousHints: previousHintsRef.current
+        }, fallback);
+        if (requestId !== requestRef.current) return false;
+        if (button === 'pista') previousHintsRef.current = [...previousHintsRef.current, text];
+        say(text, 'hint');
+        return true;
+    }, [lesson, step, vm, say]);
+
+    const handleHint = useCallback(async () => {
+        const index = Math.min(hintLevelRef.current, step.cannedHints.length - 1);
+        hintLevelRef.current = index + 1;
+        const spoken = await askTutor('pista', index + 1, step.cannedHints[index]);
         // The last hint points at the block itself.
-        if (level === step.cannedHints.length - 1 && step.hintTarget && step.hintTarget.palette) {
+        if (spoken && index === step.cannedHints.length - 1 && step.hintTarget && step.hintTarget.palette) {
             glowPaletteBlock(step.hintTarget.palette);
         }
-    }, [step, say]);
+    }, [step, askTutor]);
 
-    const handleWhy = useCallback(() => say(step.why, 'hint'), [step, say]);
+    const handleWhy = useCallback(() => askTutor('porque', 1, step.why), [step, askTutor]);
     const handleRepeat = useCallback(() => speak(message.text), [message]);
 
     if (!started) {
@@ -167,11 +196,13 @@ const TutorBar = ({lesson, vm}) => {
 TutorBar.propTypes = {
     lesson: PropTypes.shape({
         finished: PropTypes.string.isRequired,
+        id: PropTypes.string.isRequired,
         intro: PropTypes.string.isRequired,
         steps: PropTypes.arrayOf(PropTypes.shape({
             cannedHints: PropTypes.arrayOf(PropTypes.string).isRequired,
             check: PropTypes.func.isRequired,
             hintTarget: PropTypes.shape({palette: PropTypes.string}),
+            id: PropTypes.string.isRequired,
             prompt: PropTypes.string.isRequired,
             why: PropTypes.string.isRequired
         })).isRequired,

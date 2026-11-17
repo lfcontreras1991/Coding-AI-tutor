@@ -1,6 +1,8 @@
-import {hasScript} from '../checks';
+// The home server imports this file too, so the import carries its extension.
+import {hasScript} from '../checks.js';
 
 // Block names are written exactly as the es-419 editor shows them.
+// `blocks` lists the blocks a step is about; the hint model may only talk about those.
 const lesson = {
     id: 'atrapa-la-manzana',
     title: 'Atrapa la manzana',
@@ -10,6 +12,7 @@ const lesson = {
         {
             id: 'bandera',
             prompt: 'Busca el bloque amarillo con la bandera verde. Arrástralo al centro.',
+            blocks: ['event_whenflagclicked'],
             check: hasScript(null, ['event_whenflagclicked']),
             hintTarget: {palette: 'event_whenflagclicked'},
             cannedHints: [
@@ -22,6 +25,7 @@ const lesson = {
         {
             id: 'por-siempre',
             prompt: 'Ahora pega el bloque "por siempre" debajo de la bandera.',
+            blocks: ['event_whenflagclicked', 'control_forever'],
             check: hasScript(null, ['event_whenflagclicked', 'control_forever']),
             hintTarget: {palette: 'control_forever'},
             cannedHints: [
@@ -34,6 +38,7 @@ const lesson = {
         {
             id: 'seguir-el-dedo',
             prompt: 'Mete el bloque "ir a" dentro de "por siempre". Elige "puntero del ratón".',
+            blocks: ['event_whenflagclicked', 'control_forever', 'motion_goto'],
             check: hasScript(null, [
                 'event_whenflagclicked',
                 {op: 'control_forever', body: [{op: 'motion_goto', menu: {TO: '_mouse_'}}]}

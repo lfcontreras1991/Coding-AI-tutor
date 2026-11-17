@@ -15,6 +15,10 @@ Changes made in this fork:
   the editor reads each step aloud with the device's Spanish voice, checks the learner's
   scripts to decide when a step is done, and gives hints that end by making the needed block
   glow in the palette. The editor itself stays complete.
+  Hints are worded by Claude through the server's `/api/hint` (`server/hint.mjs`) from what the
+  learner has built; the API key stays in `.env` on the server (see `.env.example`). Code, not
+  the model, decides when a step is done, and the lesson's fixed hints are used whenever the
+  model is unavailable or slow.
 - `lessons/`: lesson project files.
 - `docs/ipad-test.md`: tablet test log.
 - Project files accept `ui.blocksScale` and `ui.stageSize`.

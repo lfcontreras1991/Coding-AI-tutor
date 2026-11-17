@@ -3,8 +3,11 @@
 //   /lessons/*   lesson project files and starter projects
 //   /pruebas/*   device test pages
 //   /api/test-tone.wav   short chime generated in memory, for the audio test
+//   /api/hint            POST: a tutor hint for the current step (see hint.mjs)
 //   /api/voices          GET: installed Piper voices
 //   /api/tts             POST {text, voice, speed?}: spoken phrase as WAV (see tts.mjs)
+import './env.mjs';
+
 import {createReadStream} from 'node:fs';
 import {stat} from 'node:fs/promises';
 import http from 'node:http';
@@ -12,6 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+import {HintError, getHint, hintModel, hintsUseClaude} from './hint.mjs';
 import {TtsError, listVoices, synthesize} from './tts.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -91,7 +95,7 @@ const readJsonBody = async request => {
     let size = 0;
     for await (const chunk of request) {
         size += chunk.length;
-        if (size > 10000) throw new TtsError(413, 'Request body too large');
+        if (size > 100000) throw new TtsError(413, 'Request body too large');
         chunks.push(chunk);
     }
     try {
@@ -128,6 +132,18 @@ const server = http.createServer(async (request, response) => {
     }
     if (pathname === '/api/tts' && request.method === 'POST') {
         await handleTts(request, response);
+        return;
+    }
+    if (pathname === '/api/hint' && request.method === 'POST') {
+        try {
+            const hint = await getHint(await readJsonBody(request));
+            console.log(`Hint (${hint.source}, ${hint.ms} ms): ${hint.texto}`);
+            sendJson(response, 200, hint);
+        } catch (error) {
+            const known = error instanceof HintError || error instanceof TtsError;
+            if (!known) console.error('Hint failed:', error);
+            sendJson(response, known ? error.status : 500, {error: error.message});
+        }
         return;
     }
     if (pathname === '/api/voices' && request.method === 'GET') {
@@ -182,4 +198,7 @@ server.listen(PORT, '0.0.0.0', () => {
     }
     console.log(`  Audio test: /pruebas/audio.html`);
     console.log(`  Voice test: /pruebas/voces.html`);
+    console.log(hintsUseClaude ?
+        `  Hints: written by ${hintModel}` :
+        '  Hints: fixed sentences only (no ANTHROPIC_API_KEY in .env)');
 });
