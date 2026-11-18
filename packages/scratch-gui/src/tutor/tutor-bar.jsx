@@ -10,7 +10,7 @@ import {clearGlow, glowGreenFlag, glowPaletteBlock} from './hint-glow';
 import {getActiveLesson} from './lessons';
 import {takeSnapshot} from './project-snapshot';
 import {clearSavedProject, loadSavedProject, saveProject} from './saved-project';
-import {speak, stopSpeaking} from './speech';
+import {speakSequence, stopSpeaking} from './speech';
 import styles from './tutor-bar.css';
 
 // The tutor speaks Latin American Spanish only, so its texts are not run through react-intl.
@@ -30,6 +30,8 @@ const TEXT = {
 
 // Long enough for a drag to settle before the project is checked.
 const CHECK_DELAY_MS = 400;
+// An opening shorter than this is praise such as "¡Muy bien!", not a sentence of its own.
+const SHORT_OPENING_CHARS = 20;
 const SAVE_DELAY_MS = 1000;
 
 // How often a step about the running game is checked while the learner plays.
@@ -87,11 +89,16 @@ const TutorBar = ({lesson, vm}) => {
         run: runRef.current && {positions: runRef.current.positions, ms: Date.now() - runRef.current.at}
     }), [vm]);
 
+    // What the tutor said last, as parts {text, kind}; the bar shows the part being spoken.
+    const lastSaidRef = useRef([]);
+    const sayParts = useCallback(parts => {
+        lastSaidRef.current = parts;
+        speakSequence(parts.map(part => part.text), index => setMessage(parts[index]));
+    }, []);
     const say = useCallback((text, kind) => {
         requestRef.current++;
-        setMessage({text, kind});
-        speak(text);
-    }, []);
+        sayParts([{text, kind}]);
+    }, [sayParts]);
 
     // Moves to the first step whose check does not pass yet and says what comes next.
     const goToOpenStep = useCallback((from, opening) => {
@@ -105,9 +112,21 @@ const TutorBar = ({lesson, vm}) => {
         runRef.current = null;
         setStepIndex(next);
         clearGlow();
-        const nextText = next < lesson.steps.length ? lesson.steps[next].prompt : lesson.finished;
-        say(`${opening} ${nextText}`, next > from ? 'praise' : 'prompt');
-    }, [lesson, snap, say]);
+        // A step is told as: which part of the problem comes next (when a new part begins),
+        // what is still missing for the goal, and only then what to do.
+        const nextStep = lesson.steps[next];
+        const texts = [
+            ...opening,
+            ...(nextStep ? [nextStep.partIntro, nextStep.purpose, nextStep.prompt] : [lesson.finished])
+        ].filter(Boolean);
+        // Short praise is said together with what follows it.
+        if (texts[0].length < SHORT_OPENING_CHARS) texts.splice(0, 2, `${texts[0]} ${texts[1]}`);
+        requestRef.current++;
+        sayParts(texts.map((text, index) => ({
+            text,
+            kind: index === 0 && next > from ? 'praise' : 'prompt'
+        })));
+    }, [lesson, snap, sayParts]);
 
     const completeStep = useCallback(index => {
         const completed = lesson.steps[index];
@@ -115,7 +134,7 @@ const TutorBar = ({lesson, vm}) => {
             passedRef.current.add(completed.id);
             writePassed(lesson.id, passedRef.current);
         }
-        goToOpenStep(index, TEXT.praise[index % TEXT.praise.length]);
+        goToOpenStep(index, [TEXT.praise[index % TEXT.praise.length]]);
     }, [lesson, goToOpenStep]);
 
     useEffect(() => {
@@ -196,7 +215,7 @@ const TutorBar = ({lesson, vm}) => {
 
     const handleStart = useCallback(() => {
         setStarted(true);
-        goToOpenStep(0, project === 'saved' ? lesson.resume : lesson.intro);
+        goToOpenStep(0, project === 'saved' ? [lesson.resume] : lesson.intro);
     }, [lesson, project, goToOpenStep]);
 
     // Asks for a second tap, then reloads the page so the lesson starts from its first project.
@@ -268,7 +287,7 @@ const TutorBar = ({lesson, vm}) => {
     }, [step, askTutor, otherSpriteReminder, say]);
 
     const handleWhy = useCallback(() => askTutor('porque', 1, step.why), [step, askTutor]);
-    const handleRepeat = useCallback(() => speak(message.text), [message]);
+    const handleRepeat = useCallback(() => sayParts(lastSaidRef.current), [sayParts]);
 
     if (!started) {
         return (
@@ -344,7 +363,7 @@ TutorBar.propTypes = {
     lesson: PropTypes.shape({
         finished: PropTypes.string.isRequired,
         id: PropTypes.string.isRequired,
-        intro: PropTypes.string.isRequired,
+        intro: PropTypes.arrayOf(PropTypes.string).isRequired,
         resume: PropTypes.string.isRequired,
         selectSprite: PropTypes.objectOf(PropTypes.string).isRequired,
         starter: PropTypes.string,
@@ -357,7 +376,9 @@ TutorBar.propTypes = {
             }).isRequired,
             id: PropTypes.string.isRequired,
             live: PropTypes.bool,
+            partIntro: PropTypes.string,
             prompt: PropTypes.string.isRequired,
+            purpose: PropTypes.string.isRequired,
             sprite: PropTypes.string,
             why: PropTypes.string.isRequired
         })).isRequired,

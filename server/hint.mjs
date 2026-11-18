@@ -36,7 +36,8 @@ dónde colocarlo.
 única acción siguiente.
 - Si los datos del paso dicen que no falta un bloque sino cambiar un número o una opción, o tocar algo, \
 adapta los tres niveles a eso en lugar de hablar de un bloque que falta.
-- "¿Por qué?": explica para qué sirve este paso en su juego, usando la idea que recibes.
+- "¿Por qué?": explica para qué sirve este paso usando la idea que recibes, y conéctalo con la meta del \
+juego: qué problema quedaría sin resolver si este paso no estuviera.
 
 El programa decide por su cuenta cuándo el paso está terminado, así que no digas que algo ya está bien, \
 terminado o correcto, y no des la solución completa del paso. Si ya recibió pistas antes, dilo de otra manera \
@@ -66,8 +67,10 @@ const hasCredentials = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTH
 // Retries would outlast the time a small child will wait; the fixed hint is the retry.
 const client = hasCredentials ? new Anthropic({maxRetries: 0, timeout: TIMEOUT_MS}) : null;
 
-const buildUserMessage = ({step, button, level, snapshot, missing, previousHints}) => {
+const buildUserMessage = ({lesson, step, button, level, snapshot, missing, previousHints}) => {
     return [
+        `Meta del juego que el niño está construyendo: ${lesson.goal}`,
+        `Lo que falta para la meta y que este paso resuelve (el niño ya lo escuchó): ${step.purpose}`,
         `Paso actual. El niño escuchó esta instrucción: "${step.prompt}"`,
         `Idea del paso: ${step.why}`,
         step.blocks.length ?
@@ -103,6 +106,7 @@ const validateRequest = body => {
     }
     const strings = value => (Array.isArray(value) ? value.filter(item => typeof item === 'string').slice(0, 6) : []);
     return {
+        lesson,
         step,
         button: body.button,
         level,

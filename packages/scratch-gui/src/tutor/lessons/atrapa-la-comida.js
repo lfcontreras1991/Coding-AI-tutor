@@ -9,6 +9,9 @@ const foodLoop = (...inside) => hasScript('Comida', [
 
 // Block names are written exactly as the es-419 editor shows them.
 // Each step:
+//   `partIntro` said when the step opens a new part of the problem: what is solved, what comes next
+//   `purpose` what is still missing for the goal, said before the instruction
+//   `prompt`  the instruction: what to do in this step
 //   `sprite`  the sprite whose scripts the step is about; the tutor asks the learner to select it
 //   `blocks`  the blocks the step is about; the hint model may only talk about those
 //   `live`    the check is about the running game, so it is watched while the learner plays
@@ -18,9 +21,16 @@ const lesson = {
     title: 'Atrapa la comida',
     // Sprites Dinosaurio and Comida and the variable Puntos, without scripts.
     starter: '/lessons/atrapa-la-comida/starter.json',
-    intro: '¡Hola! Soy Hermione. Vamos a hacer un juego con tu dinosaurio.',
-    resume: '¡Hola otra vez! Sigamos con tu juego.',
-    finished: '¡Lo lograste! Hiciste tu propio juego. Sigue jugando o cámbialo como quieras.',
+    // The lesson is told as a problem that is split into parts and solved one part at a time.
+    goal: 'Un juego donde un dinosaurio atrapa comida que cae y gana puntos.',
+    intro: [
+        '¡Hola! Soy Hermione. Hoy vamos a resolver un problema.',
+        'Queremos un juego donde tu dinosaurio atrapa comida que cae.',
+        'Un problema grande se resuelve por partes. Son cuatro: mover a tu dinosaurio, ' +
+            'hacer caer la comida, atraparla y contar los puntos.'
+    ],
+    resume: '¡Hola otra vez! Seguimos con el juego de tu dinosaurio que atrapa comida.',
+    finished: '¡Lo lograste! Resolviste el problema parte por parte y ahora tienes tu propio juego.',
     selectSprite: {
         Dinosaurio: 'Primero toca tu dinosaurio, debajo del escenario.',
         Comida: 'Primero toca la comida, debajo del escenario.'
@@ -28,6 +38,8 @@ const lesson = {
     steps: [
         {
             id: 'bandera',
+            partIntro: 'Empecemos por la primera: mover a tu dinosaurio.',
+            purpose: 'Todo juego necesita una forma de empezar.',
             sprite: 'Dinosaurio',
             prompt: 'Busca el bloque amarillo con la bandera verde. Arrástralo al centro.',
             blocks: ['event_whenflagclicked'],
@@ -42,6 +54,7 @@ const lesson = {
         },
         {
             id: 'por-siempre',
+            purpose: 'Tu dinosaurio tiene que moverse todo el tiempo, no una sola vez.',
             sprite: 'Dinosaurio',
             prompt: 'Ahora pega el bloque "por siempre" debajo de la bandera.',
             blocks: ['event_whenflagclicked', 'control_forever'],
@@ -56,6 +69,7 @@ const lesson = {
         },
         {
             id: 'seguir-el-dedo',
+            purpose: 'Ahora falta decirle a dónde ir: a donde esté tu dedo.',
             sprite: 'Dinosaurio',
             prompt: 'Mete el bloque "ir a" dentro de "por siempre". Elige "puntero del ratón".',
             blocks: ['event_whenflagclicked', 'control_forever', 'motion_goto'],
@@ -73,8 +87,9 @@ const lesson = {
         },
         {
             id: 'probar',
+            purpose: 'Antes de seguir, hay que comprobar que esta parte funciona.',
             live: true,
-            prompt: 'Vamos a probar. Toca la bandera verde y mueve tu dedo por el escenario.',
+            prompt: 'Toca la bandera verde y mueve tu dedo por el escenario.',
             blocks: [],
             check: movedSinceFlag('Dinosaurio'),
             hintTarget: {greenFlag: true},
@@ -89,8 +104,10 @@ const lesson = {
         },
         {
             id: 'comida-bandera',
+            partIntro: 'Ya resolvimos la primera parte: tu dinosaurio sigue tu dedo. Ahora la segunda: que la comida caiga.',
+            purpose: 'La comida todavía no sabe hacer nada. Necesita su propio programa.',
             sprite: 'Comida',
-            prompt: 'Ahora le toca a la comida. Tócala debajo del escenario y ponle un bloque de bandera verde.',
+            prompt: 'Toca la comida, debajo del escenario, y ponle un bloque de bandera verde.',
             blocks: ['event_whenflagclicked'],
             check: hasScript('Comida', ['event_whenflagclicked']),
             hintTarget: {palette: 'event_whenflagclicked'},
@@ -104,6 +121,7 @@ const lesson = {
         },
         {
             id: 'comida-arriba',
+            purpose: 'Para poder caer, la comida tiene que empezar arriba.',
             sprite: 'Comida',
             prompt: 'Pega debajo de la bandera el bloque azul "ir a x: y:". Así la comida empieza arriba.',
             blocks: ['event_whenflagclicked', 'motion_gotoxy'],
@@ -123,6 +141,7 @@ const lesson = {
         },
         {
             id: 'comida-por-siempre',
+            purpose: 'Caer no es un solo movimiento: es bajar un poquito, muchas veces.',
             sprite: 'Comida',
             prompt: 'Pega un "por siempre" debajo de "ir a x: y:".',
             blocks: ['motion_gotoxy', 'control_forever'],
@@ -137,6 +156,7 @@ const lesson = {
         },
         {
             id: 'comida-cae',
+            purpose: 'Ahora hay que decirle cuánto baja cada vez.',
             sprite: 'Comida',
             prompt: 'Mete "cambiar y en" dentro de "por siempre". Toca el número y escribe -5.',
             blocks: ['control_forever', 'motion_changeyby'],
@@ -153,6 +173,8 @@ const lesson = {
         },
         {
             id: 'si',
+            partIntro: 'Ya resolvimos la segunda parte: la comida cae. Ahora la tercera: atraparla.',
+            purpose: 'El juego tiene que darse cuenta de cuándo tu dinosaurio atrapa la comida. Para eso hace una pregunta.',
             sprite: 'Comida',
             prompt: 'Mete el bloque "si entonces" dentro de "por siempre", debajo de "cambiar y en".',
             blocks: ['control_forever', 'motion_changeyby', 'control_if'],
@@ -167,6 +189,7 @@ const lesson = {
         },
         {
             id: 'tocando',
+            purpose: 'La pregunta es: ¿la comida está tocando a tu dinosaurio?',
             sprite: 'Comida',
             prompt: 'Busca el bloque celeste "¿tocando?". Mételo en el hueco del "si" y elige Dinosaurio.',
             blocks: ['control_if', 'sensing_touchingobject'],
@@ -189,6 +212,7 @@ const lesson = {
         },
         {
             id: 'otra-comida',
+            purpose: 'Falta decidir qué pasa cuando la respuesta es sí: que aparezca más comida.',
             sprite: 'Comida',
             prompt: 'Mete el bloque azul "ir a posición aleatoria" dentro del "si".',
             blocks: ['control_if', 'motion_goto'],
@@ -204,6 +228,8 @@ const lesson = {
         },
         {
             id: 'puntos',
+            partIntro: 'Ya resolvimos la tercera parte: tu dinosaurio atrapa la comida. Falta la última: contar los puntos.',
+            purpose: 'Cada vez que atrapa comida, hay que sumar un punto.',
             sprite: 'Comida',
             prompt: 'Mete también "cambiar Puntos en 1" dentro del "si". Está en Variables.',
             blocks: ['control_if', 'data_changevariableby'],
@@ -222,6 +248,7 @@ const lesson = {
         },
         {
             id: 'puntos-cero',
+            purpose: 'Queda un problema: al empezar otro juego, los puntos viejos siguen ahí.',
             sprite: 'Comida',
             prompt: 'Pega "fijar Puntos a 0" justo debajo de la bandera de la comida.',
             blocks: ['event_whenflagclicked', 'data_setvariableto', 'control_forever'],
@@ -241,8 +268,9 @@ const lesson = {
         },
         {
             id: 'jugar',
+            purpose: 'Ya resolvimos las cuatro partes. Solo falta comprobar que todo funciona junto.',
             live: true,
-            prompt: '¡Tu juego está listo! Toca la bandera verde y atrapa la comida cinco veces.',
+            prompt: 'Toca la bandera verde y atrapa la comida cinco veces.',
             blocks: [],
             check: scoredSinceFlag('Puntos', 5),
             hintTarget: {greenFlag: true},
