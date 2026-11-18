@@ -5,9 +5,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 import {blockName, describeSnapshot} from '../packages/scratch-gui/src/tutor/block-names.js';
-import atrapaLaManzana from '../packages/scratch-gui/src/tutor/lessons/atrapa-la-manzana.js';
+import atrapaLaComida from '../packages/scratch-gui/src/tutor/lessons/atrapa-la-comida.js';
 
-const lessons = {[atrapaLaManzana.id]: atrapaLaManzana};
+const lessons = {[atrapaLaComida.id]: atrapaLaComida};
 
 const MODEL = process.env.HINT_MODEL || 'claude-opus-5-5';
 const TIMEOUT_MS = Number(process.env.HINT_TIMEOUT_MS) || 5000;
@@ -34,6 +34,8 @@ Qué tipo de ayuda das depende del nivel que te piden, porque el niño aprende m
 dónde colocarlo.
 - Nivel 3: el bloque que falta va a brillar en la pantalla. Dile que mire el bloque que brilla y cuál es la \
 única acción siguiente.
+- Si los datos del paso dicen que no falta un bloque sino cambiar un número o una opción, o tocar algo, \
+adapta los tres niveles a eso en lugar de hablar de un bloque que falta.
 - "¿Por qué?": explica para qué sirve este paso en su juego, usando la idea que recibes.
 
 El programa decide por su cuenta cuándo el paso está terminado, así que no digas que algo ya está bien, \
@@ -68,7 +70,11 @@ const buildUserMessage = ({step, button, level, snapshot, missing, previousHints
     return [
         `Paso actual. El niño escuchó esta instrucción: "${step.prompt}"`,
         `Idea del paso: ${step.why}`,
-        `Bloques de este paso: ${step.blocks.map(opcode => `"${blockName(opcode)}"`).join(', ')}.`,
+        step.blocks.length ?
+            `Bloques de este paso: ${step.blocks.map(opcode => `"${blockName(opcode)}"`).join(', ')}.` :
+            'En este paso no se coloca ningún bloque.',
+        step.sprite ? `El programa de este paso va en el objeto "${step.sprite}".` : null,
+        step.tip ? `Datos para ti: ${step.tip}` : null,
         `Lo que el niño tiene construido ahora:\n${describeSnapshot(snapshot)}`,
         missing.length ?
             `Según el programa, todavía falta colocar bien: ${missing.map(opcode => `"${blockName(opcode)}"`).join(', ')}.` :
@@ -79,7 +85,7 @@ const buildUserMessage = ({step, button, level, snapshot, missing, previousHints
         button === 'porque' ?
             'El niño tocó "¿Por qué?". Escribe la explicación.' :
             `El niño tocó "Dame una pista". Escribe una pista de nivel ${level}.`
-    ].join('\n\n');
+    ].filter(Boolean).join('\n\n');
 };
 
 const validateRequest = body => {

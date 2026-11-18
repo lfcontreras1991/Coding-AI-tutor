@@ -21,7 +21,7 @@ Start the server on the PC with `npm run serve` and open the "On Wi-Fi" address 
 
 ## Day 3: first guided steps (to do)
 
-Open `/editor.html?locale=es-419&lesson=atrapa-la-manzana`. The tutor bar sits above the
+Open `/editor.html?locale=es-419&lesson=atrapa-la-comida`. The tutor bar sits above the
 full editor; nothing in the editor is hidden. The tablet voice was confirmed to speak from
 a timer with no new tap, so spoken hints need no workaround.
 

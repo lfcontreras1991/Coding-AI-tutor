@@ -42,4 +42,33 @@ describe('describeSnapshot', () => {
             '    - ir a (puntero del ratón)'
         ].join('\n'));
     });
+
+    test('shows typed numbers, variable names and blocks plugged into holes', () => {
+        const touching = node('sensing_touchingobject', {
+            inputs: {TOUCHINGOBJECTMENU: node('sensing_touchingobjectmenu', {fields: {TOUCHINGOBJECTMENU: 'Dinosaurio'}})}
+        });
+        const snapshot = {
+            sprites: [{
+                name: 'Comida',
+                isStage: false,
+                scripts: [[
+                    node('motion_changeyby', {inputs: {DY: node('math_number', {fields: {NUM: '-5'}})}}),
+                    node('control_if', {
+                        inputs: {CONDITION: touching},
+                        body: [node('data_changevariableby', {
+                            fields: {VARIABLE: 'Puntos'},
+                            inputs: {VALUE: node('math_number', {fields: {NUM: '1'}})}
+                        })]
+                    })
+                ]]
+            }]
+        };
+        expect(describeSnapshot(snapshot)).toBe([
+            'Objeto "Comida":',
+            'Programa 1:',
+            '  - cambiar y en (-5)',
+            '  - si ... entonces (¿tocando ...? Dinosaurio)',
+            '    - cambiar ... en (Puntos, 1)'
+        ].join('\n'));
+    });
 });

@@ -17,6 +17,11 @@ const GLOW_CSS = `
     stroke-width: 9px !important;
     animation: tutor-glow-outline 0.6s ease-in-out infinite alternate;
 }
+.${GLOW_CLASS}-box {
+    outline: 5px solid #ffe600;
+    border-radius: 0.5rem;
+    animation: tutor-glow-halo 0.6s ease-in-out infinite alternate;
+}
 @keyframes tutor-glow-halo {
     from { filter: drop-shadow(0 0 4px #ff1493) drop-shadow(0 0 8px #ff1493); }
     to { filter: drop-shadow(0 0 10px #ff1493) drop-shadow(0 0 22px #ff1493) drop-shadow(0 0 36px #ff1493); }
@@ -39,7 +44,7 @@ const ensureStyle = () => {
 
 const clearGlow = () => {
     clearTimeout(glowTimer);
-    if (glowingRoot) glowingRoot.classList.remove(GLOW_CLASS);
+    if (glowingRoot) glowingRoot.classList.remove(GLOW_CLASS, `${GLOW_CLASS}-box`);
     glowingRoot = null;
 };
 
@@ -69,4 +74,20 @@ const glowPaletteBlock = opcode => {
     glowTimer = setTimeout(clearGlow, GLOW_MS);
 };
 
-export {clearGlow, glowPaletteBlock};
+/**
+ * Makes the green flag above the stage pulse for a few seconds.
+ */
+const glowGreenFlag = () => {
+    clearGlow();
+    const flag = document.querySelector('img[class*="green-flag_green-flag"]');
+    if (!flag) {
+        log.warn('glowGreenFlag: no green flag on the page');
+        return;
+    }
+    ensureStyle();
+    glowingRoot = flag;
+    glowingRoot.classList.add(`${GLOW_CLASS}-box`);
+    glowTimer = setTimeout(clearGlow, GLOW_MS);
+};
+
+export {clearGlow, glowGreenFlag, glowPaletteBlock};

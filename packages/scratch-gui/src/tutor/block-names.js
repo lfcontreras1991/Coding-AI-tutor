@@ -9,8 +9,8 @@ const blockNames = {
     control_stop: 'detener',
     control_wait: 'esperar ... segundos',
     control_wait_until: 'esperar hasta que',
-    data_changevariableby: 'sumar a ...',
-    data_setvariableto: 'dar a ... el valor',
+    data_changevariableby: 'cambiar ... en',
+    data_setvariableto: 'fijar ... a',
     event_whenflagclicked: 'al presionar bandera verde',
     event_whenkeypressed: 'al presionar tecla',
     event_whenthisspriteclicked: 'al hacer clic en este objeto',
@@ -22,8 +22,8 @@ const blockNames = {
     looks_switchcostumeto: 'cambiar disfraz a',
     motion_changexby: 'cambiar x en',
     motion_changeyby: 'cambiar y en',
-    motion_glidesecstoxy: 'deslizar en ... segs a x: y:',
-    motion_glideto: 'deslizar en ... segs a',
+    motion_glidesecstoxy: 'desplazar en ... segs a x: y:',
+    motion_glideto: 'desplazar en ... segs a',
     motion_goto: 'ir a',
     motion_gotoxy: 'ir a x: y:',
     motion_ifonedgebounce: 'si toca un borde, rebotar',
@@ -59,14 +59,28 @@ const categoryNames = {
 const blockName = opcode => blockNames[opcode] ||
     `otro bloque de ${categoryNames[opcode.split('_')[0]] || 'otra categoría'}`;
 
+// Blocks that only hold a typed value or a dropdown choice for the block they sit in.
+const SHADOW_OPS = /^(math_|text$)|menu$/;
+
+// A block plugged into a hole, on one line.
+const describeInput = node => {
+    const inner = Object.values(node.inputs)
+        .filter(Boolean)
+        .flatMap(input => Object.values(input.fields));
+    return `${blockName(node.op)}${inner.length ? ` ${inner.join(', ')}` : ''}`;
+};
+
 const describeNode = (node, depth) => {
     const indent = '  '.repeat(depth);
-    const options = Object.values(node.inputs)
+    // What the block shows in its holes and dropdowns: typed numbers, chosen options and variable
+    // or sprite names, and the blocks plugged into its holes.
+    const plugged = Object.values(node.inputs)
         .filter(Boolean)
-        .flatMap(input => Object.values(input.fields))
-        .filter(value => Object.hasOwn(menuOptionNames, value))
-        .map(value => menuOptionNames[value]);
-    const lines = [`${indent}- ${blockName(node.op)}${options.length ? ` (${options.join(', ')})` : ''}`];
+        .flatMap(input => (SHADOW_OPS.test(input.op) ? Object.values(input.fields) : [describeInput(input)]));
+    const shown = [...Object.values(node.fields), ...plugged]
+        .filter(value => value !== '')
+        .map(value => (Object.hasOwn(menuOptionNames, value) ? menuOptionNames[value] : value));
+    const lines = [`${indent}- ${blockName(node.op)}${shown.length ? ` (${shown.join(', ')})` : ''}`];
     for (const inner of [node.body, node.body2]) {
         if (inner.length) lines.push(...inner.map(child => describeNode(child, depth + 1)));
     }

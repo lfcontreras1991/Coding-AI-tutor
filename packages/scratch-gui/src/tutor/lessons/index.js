@@ -1,9 +1,9 @@
 import queryString from 'query-string';
 
-import atrapaLaManzana from './atrapa-la-manzana';
+import atrapaLaComida from './atrapa-la-comida';
 
 const lessons = {
-    [atrapaLaManzana.id]: atrapaLaManzana
+    [atrapaLaComida.id]: atrapaLaComida
 };
 
 /**

@@ -1,0 +1,159 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {"tutor-puntos": ["Puntos", 0]},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "name": "Selva",
+          "assetId": "f4f908da19e2753f3ed679d7b37650ca",
+          "md5ext": "f4f908da19e2753f3ed679d7b37650ca.png",
+          "dataFormat": "png",
+          "bitmapResolution": 2,
+          "rotationCenterX": 480,
+          "rotationCenterY": 360
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 0,
+      "tempo": 60,
+      "videoTransparency": 50,
+      "videoState": "on",
+      "textToSpeechLanguage": null
+    },
+    {
+      "isStage": false,
+      "name": "Dinosaurio",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "name": "Dinosaurio-a",
+          "assetId": "a98e3f93853513e7c00bab4c61752312",
+          "md5ext": "a98e3f93853513e7c00bab4c61752312.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 1,
+          "rotationCenterX": 60,
+          "rotationCenterY": 52
+        },
+        {
+          "name": "Dinosaurio-b",
+          "assetId": "ac99ef62e3e018b8db550bb2a187cbe9",
+          "md5ext": "ac99ef62e3e018b8db550bb2a187cbe9.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 1,
+          "rotationCenterX": 87,
+          "rotationCenterY": 52
+        },
+        {
+          "name": "Dinosaurio-c",
+          "assetId": "c63cca929380152b978d8671fe6003f7",
+          "md5ext": "c63cca929380152b978d8671fe6003f7.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 1,
+          "rotationCenterX": 59,
+          "rotationCenterY": 52
+        },
+        {
+          "name": "Dinosaurio-d",
+          "assetId": "723bd1559f8baae4184fa24a6513362b",
+          "md5ext": "723bd1559f8baae4184fa24a6513362b.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 1,
+          "rotationCenterX": 89,
+          "rotationCenterY": 88
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 1,
+      "visible": true,
+      "x": 0,
+      "y": -100,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    },
+    {
+      "isStage": false,
+      "name": "Comida",
+      "variables": {},
+      "lists": {},
+      "broadcasts": {},
+      "blocks": {},
+      "comments": {},
+      "currentCostume": 0,
+      "costumes": [
+        {
+          "name": "Manzana",
+          "assetId": "3826a4091a33e4d26f87a2fac7cf796b",
+          "md5ext": "3826a4091a33e4d26f87a2fac7cf796b.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 1,
+          "rotationCenterX": 31,
+          "rotationCenterY": 31
+        },
+        {
+          "name": "Sandía",
+          "assetId": "21d1340478e32a942914a7afd12b9f1a",
+          "md5ext": "21d1340478e32a942914a7afd12b9f1a.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 1,
+          "rotationCenterX": 40,
+          "rotationCenterY": 28
+        },
+        {
+          "name": "Taco",
+          "assetId": "383ea1ef802bc2706670536cfa8271b7",
+          "md5ext": "383ea1ef802bc2706670536cfa8271b7.svg",
+          "dataFormat": "svg",
+          "bitmapResolution": 1,
+          "rotationCenterX": 78,
+          "rotationCenterY": 48
+        }
+      ],
+      "sounds": [],
+      "volume": 100,
+      "layerOrder": 2,
+      "visible": true,
+      "x": 0,
+      "y": 120,
+      "size": 100,
+      "direction": 90,
+      "draggable": false,
+      "rotationStyle": "all around"
+    }
+  ],
+  "monitors": [
+    {
+      "id": "tutor-puntos",
+      "mode": "default",
+      "opcode": "data_variable",
+      "params": {"VARIABLE": "Puntos"},
+      "spriteName": null,
+      "value": 0,
+      "width": 0,
+      "height": 0,
+      "x": 5,
+      "y": 5,
+      "visible": true,
+      "sliderMin": 0,
+      "sliderMax": 100,
+      "isDiscrete": true
+    }
+  ],
+  "extensions": [],
+  "meta": {"semver": "3.0.0", "vm": "0.2.0", "agent": "tutor"}
+}

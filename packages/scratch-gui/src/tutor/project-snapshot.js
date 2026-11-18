@@ -48,14 +48,21 @@ const scriptsFromBlocks = blocks => Object.values(blocks)
 
 /**
  * @param {object} vm - the scratch-vm instance
- * @returns {{sprites: Array<{name: string, isStage: boolean, scripts: Array}>}} the snapshot
+ * @returns {{sprites: Array<{name: string, isStage: boolean, x: number, y: number, scripts: Array}>,
+ *   variables: object}} the snapshot; `variables` maps the names of the variables for all sprites
+ *   to their values
  */
 const takeSnapshot = vm => ({
+    variables: Object.fromEntries(Object.values(vm.runtime.getTargetForStage().variables)
+        .filter(variable => variable.type === '')
+        .map(variable => [variable.name, variable.value])),
     sprites: vm.runtime.targets
         .filter(target => target.isOriginal)
         .map(target => ({
             name: target.getName(),
             isStage: target.isStage,
+            x: target.x,
+            y: target.y,
             scripts: scriptsFromBlocks(target.blocks._blocks)
         }))
 });

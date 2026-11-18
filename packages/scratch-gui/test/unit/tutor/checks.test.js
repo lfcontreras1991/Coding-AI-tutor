@@ -1,4 +1,4 @@
-import {hasScript} from '../../../src/tutor/checks';
+import {hasScript, movedSinceFlag, scoredSinceFlag} from '../../../src/tutor/checks';
 import {scriptsFromBlocks} from '../../../src/tutor/project-snapshot';
 
 // Builds a VM-style block map from a compact description.
@@ -154,5 +154,79 @@ describe('hasScript', () => {
         const snapshot = snapshotOf({name: 'Cesta', scripts: [[{op: 'control_forever'}]]});
         const check = hasScript('Cesta', ['event_whenflagclicked', 'control_forever']);
         expect(check(snapshot)).toEqual({done: false, missing: ['event_whenflagclicked']});
+    });
+});
+
+// Snapshot nodes written directly, for blocks with numbers, variables and blocks in holes.
+const node = (op, extra = {}) => ({op, fields: {}, inputs: {}, body: [], body2: [], ...extra});
+const number = value => node('math_number', {fields: {NUM: value}});
+const foodWith = (...inside) => ({
+    sprites: [{
+        name: 'Comida',
+        isStage: false,
+        scripts: [[node('event_whenflagclicked'), node('control_forever', {body: inside})]]
+    }]
+});
+const inLoop = item => hasScript('Comida', ['event_whenflagclicked', {op: 'control_forever', body: [item]}]);
+
+describe('hasScript with numbers, fields and plugged blocks', () => {
+    const falls = inLoop({op: 'motion_changeyby', num: {DY: {max: -1}}});
+
+    test('passes when the typed number is in range', () => {
+        expect(falls(foodWith(node('motion_changeyby', {inputs: {DY: number('-5')}}))).done).toBe(true);
+    });
+
+    test('fails on a number out of range and on an empty hole', () => {
+        expect(falls(foodWith(node('motion_changeyby', {inputs: {DY: number('10')}}))))
+            .toEqual({done: false, missing: ['motion_changeyby']});
+        expect(falls(foodWith(node('motion_changeyby', {inputs: {DY: number('')}}))).done).toBe(false);
+    });
+
+    test('checks the variable a block is about', () => {
+        const scores = inLoop({op: 'data_changevariableby', fields: {VARIABLE: 'Puntos'}});
+        const change = name => node('data_changevariableby', {fields: {VARIABLE: name}});
+        expect(scores(foodWith(change('Puntos'))).done).toBe(true);
+        expect(scores(foodWith(change('mi variable'))).done).toBe(false);
+    });
+
+    test('checks the block plugged into a hole and its dropdown', () => {
+        const asks = inLoop({
+            op: 'control_if',
+            inputs: {CONDITION: {op: 'sensing_touchingobject', menu: {TOUCHINGOBJECTMENU: 'Dinosaurio'}}}
+        });
+        const touching = name => node('sensing_touchingobject', {
+            inputs: {TOUCHINGOBJECTMENU: node('sensing_touchingobjectmenu', {fields: {TOUCHINGOBJECTMENU: name}})}
+        });
+        expect(asks(foodWith(node('control_if', {inputs: {CONDITION: touching('Dinosaurio')}}))).done).toBe(true);
+        expect(asks(foodWith(node('control_if', {inputs: {CONDITION: touching('_mouse_')}}))))
+            .toEqual({done: false, missing: ['sensing_touchingobject']});
+        expect(asks(foodWith(node('control_if', {inputs: {CONDITION: null}}))))
+            .toEqual({done: false, missing: ['sensing_touchingobject']});
+    });
+});
+
+describe('checks about the running game', () => {
+    const at = (x, y, run) => ({sprites: [{name: 'Dinosaurio', isStage: false, x, y, scripts: []}], variables: {}, run});
+    const run = {positions: {Dinosaurio: {x: 0, y: -100}}};
+
+    test('movedSinceFlag needs a green flag and a real move', () => {
+        const moved = movedSinceFlag('Dinosaurio');
+        expect(moved(at(80, 20, null)).done).toBe(false);
+        expect(moved(at(3, -100, run)).done).toBe(false);
+        expect(moved(at(80, 20, run))).toEqual({done: true, missing: []});
+    });
+
+    test('scoredSinceFlag needs the score to be reached in a started game', () => {
+        const fivePoints = scoredSinceFlag('Puntos', 5);
+        const playing = {positions: {}, ms: 2000};
+        expect(fivePoints({sprites: [], variables: {Puntos: 4}, run: playing}).done).toBe(false);
+        expect(fivePoints({sprites: [], variables: {Puntos: 5}, run: playing}).done).toBe(true);
+        expect(fivePoints({sprites: [], variables: {}, run: playing}).done).toBe(false);
+    });
+
+    test('scoredSinceFlag ignores a score left over from an earlier game', () => {
+        const fivePoints = scoredSinceFlag('Puntos', 5);
+        expect(fivePoints({sprites: [], variables: {Puntos: 7}, run: null}).done).toBe(false);
+        expect(fivePoints({sprites: [], variables: {Puntos: 7}, run: {positions: {}, ms: 20}}).done).toBe(false);
     });
 });
